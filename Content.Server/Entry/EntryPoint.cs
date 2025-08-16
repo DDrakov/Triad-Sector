@@ -36,6 +36,7 @@ using Robust.Shared.ContentPack;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
+using Content.Server.Shuttles;
 
 namespace Content.Server.Entry
 {
@@ -115,6 +116,8 @@ namespace Content.Server.Entry
                 IoCManager.Resolve<ServerInfoManager>().Initialize();
                 IoCManager.Resolve<ServerApi>().Initialize();
                 IoCManager.Resolve<MiniAuthManager>();
+                IoCManager.Resolve<DiscordAuthManager>().Initialize(); // Floofstation
+                IoCManager.Resolve<ServerIdentityService>().Initialize();
 
                 _voteManager.Initialize();
                 _updateManager.Initialize();

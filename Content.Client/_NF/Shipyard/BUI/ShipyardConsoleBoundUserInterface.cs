@@ -130,7 +130,7 @@ public sealed class ShipyardConsoleBoundUserInterface : BoundUserInterface
         _savedShipsList.Clear();
         
         var savedShipFiles = _shipFileManagementSystem.GetSavedShipFiles();
-        Logger.Info($"RefreshSavedShipList: Found {savedShipFiles.Count} ships to display");
+        //Logger.Info($"RefreshSavedShipList: Found {savedShipFiles.Count} ships to display");
         
         foreach (var filePath in savedShipFiles)
         {
@@ -138,7 +138,7 @@ public sealed class ShipyardConsoleBoundUserInterface : BoundUserInterface
             var fileName = ExtractFileNameWithoutExtension(filePath);
             var item = _savedShipsList.AddItem(fileName);
             item.Metadata = filePath;
-            Logger.Info($"Added ship to UI list: {fileName} (path: {filePath})");
+            //Logger.Info($"Added ship to UI list: {fileName} (path: {filePath})");
         }
         
         // Enable/disable load button based on available ships
@@ -189,8 +189,11 @@ public sealed class ShipyardConsoleBoundUserInterface : BoundUserInterface
         Populate(castState.ShipyardPrototypes.available, castState.ShipyardPrototypes.unavailable, castState.FreeListings, castState.IsTargetIdPresent);
         _menu?.UpdateState(castState);
         
-        // Refresh saved ships list whenever UI updates
-        RefreshSavedShipList();
+        // Only refresh saved ships list if the UI is actually open
+        if (IsOpened)
+        {
+            RefreshSavedShipList();
+        }
     }
 
     protected override void Dispose(bool disposing)

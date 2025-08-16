@@ -24,6 +24,7 @@ using Robust.Shared.Utility;
 using Content.Shared.Doors.Components;
 using Robust.Shared.Map.Components;
 using Content.Server.Shuttles.Save;
+using Content.Server.Administration.Commands; // For ShipBlacklistService
 
 namespace Content.Server._NF.Shipyard.Systems;
 
@@ -111,19 +112,37 @@ public sealed partial class ShipyardSystem : SharedShipyardSystem
         }
         _currentlyLoading.Add(playerSession.UserId);
 
-        _sawmill.Info($"Player {playerSession.Name} requested to load ship from YAML data");
+        _sawmill.Info($"SHIP LOAD REQUEST: Player {playerSession.Name} ({playerSession.UserId}) attempting to load ship");
         var shipSerializationSystem = _entitySystemManager.GetEntitySystem<ShipSerializationSystem>();
 
         try
         {
-            _sawmill.Debug($"Attempting to deserialize YAML data for player {playerSession.Name}");
+            // Attempting to deserialize YAML
             var shipGridData = shipSerializationSystem.DeserializeShipGridDataFromYaml(message.YamlData, playerSession.UserId, out bool wasLegacyConverted);
+            
+            // Check if ship is blacklisted BEFORE loading
+            if (ShipBlacklistService.IsBlacklisted(shipGridData.Metadata.Checksum))
+            {
+                var reason = ShipBlacklistService.GetBlacklistReason(shipGridData.Metadata.Checksum) ?? "Blacklisted by admin";
+                _sawmill.Warning($"SECURITY: Blocked blacklisted ship load attempt by {playerSession.Name} - {reason}");
+                
+                var playerEntity = playerSession.AttachedEntity;
+                if (playerEntity.HasValue)
+                {
+                    _popup.PopupEntity($"This ship has been blacklisted: {reason}", 
+                                     playerEntity.Value, playerEntity.Value, PopupType.LargeCaution);
+                }
+                return;
+            }
+            
+            // Log this attempt for admin convenience
+            var attemptId = ShipBlacklistService.LogShipAttempt(shipGridData.Metadata.Checksum, playerSession.Name, shipGridData.Metadata.ShipName + "_" + shipGridData.Metadata.Timestamp.ToString("yyyyMMdd_HHmmss") + ".yml");
 
             // Duplicate ship detection using original grid ID
-            _sawmill.Debug($"Checking for duplicate ship with OriginalGridId: {shipGridData.Metadata.OriginalGridId}");
+            // Checking for duplicate ship
             if (_loadedShipIds.Contains(shipGridData.Metadata.OriginalGridId))
             {
-                _sawmill.Error($"Ship with ID {shipGridData.Metadata.OriginalGridId} has already been loaded.");
+                _sawmill.Warning($"SECURITY: Duplicate ship load attempt - ID {shipGridData.Metadata.OriginalGridId} by {playerSession.Name}");
                 
                 // Show in-character message for duplicate ship loading
                 var playerEntity = playerSession.AttachedEntity;
@@ -150,7 +169,7 @@ public sealed partial class ShipyardSystem : SharedShipyardSystem
                         // Check if ID card already has a deed
                         if (HasComp<ShuttleDeedComponent>(targetId))
                         {
-                            _sawmill.Error($"ID card {targetId} already has a ship deed, cannot load another ship.");
+                            _sawmill.Warning($"SECURITY: Player {playerSession.Name} attempted to load ship on card {targetId} that already has a deed");
                             return;
                         }
                         
@@ -163,7 +182,7 @@ public sealed partial class ShipyardSystem : SharedShipyardSystem
 
             if (!targetConsole.HasValue || !idCardInConsole.HasValue)
             {
-                _sawmill.Error($"No shipyard console with ID card found for ship loading.");
+                _sawmill.Warning($"SECURITY: Player {playerSession.Name} attempted ship load without valid ID card in console");
                 return;
             }
 
@@ -185,7 +204,7 @@ public sealed partial class ShipyardSystem : SharedShipyardSystem
             // Track this ship as loaded to prevent duplicate loading
             _loadedShipIds.Add(shipGridData.Metadata.OriginalGridId);
             
-            _sawmill.Info($"Player {playerSession.Name} successfully loaded ship {shipGridData.Metadata.ShipName} (Grid: {newShipGridUid}) on shipyard map.");
+            _sawmill.Info($"SHIP LOADED: {shipGridData.Metadata.ShipName} by {playerSession.Name} ({playerSession.UserId})");
 
             // Update shuttle index for spacing
             if (TryComp<MapGridComponent>(newShipGridUid, out var gridComp))
@@ -197,7 +216,7 @@ public sealed partial class ShipyardSystem : SharedShipyardSystem
             if (!HasComp<ShuttleComponent>(newShipGridUid))
             {
                 var shuttleComp = EnsureComp<ShuttleComponent>(newShipGridUid);
-                _sawmill.Info($"Added ShuttleComponent to loaded ship {newShipGridUid}");
+                // Added ShuttleComponent
             }
 
             // Add IFFComponent to make it show up properly on radar as a friendly player ship
@@ -206,7 +225,7 @@ public sealed partial class ShipyardSystem : SharedShipyardSystem
                 var iffComp = EnsureComp<IFFComponent>(newShipGridUid);
                 _shuttle.AddIFFFlag(newShipGridUid, IFFFlags.IsPlayerShuttle);
                 _shuttle.SetIFFColor(newShipGridUid, IFFComponent.IFFColor);
-                _sawmill.Info($"Added IFFComponent to loaded ship {newShipGridUid}");
+                // Added IFFComponent
             }
 
             var shipName = shipGridData.Metadata.ShipName;
@@ -222,14 +241,14 @@ public sealed partial class ShipyardSystem : SharedShipyardSystem
                 };
                 shuttleStation = _station.InitializeNewStation(stationProto.Stations[shipName], gridUids);
                 finalShipName = Name(shuttleStation.Value); // Use station name with prefix like purchased ships
-                _sawmill.Info($"Created station {shuttleStation} from prototype for loaded ship, final name: {finalShipName}");
+                // Created station from prototype
 
                 var vesselInfo = EnsureComp<ExtraShuttleInformationComponent>(shuttleStation.Value);
                 vesselInfo.Vessel = shipName;
             }
             else
             {
-                _sawmill.Info($"No station prototype found for {shipName}, ship will work without station setup");
+                // No station prototype found
             }
 
             // Dock the loaded ship to the console's grid (similar to purchase behavior)
@@ -237,17 +256,23 @@ public sealed partial class ShipyardSystem : SharedShipyardSystem
             {
                 var targetGrid = consoleXform.GridUid.Value;
                 _shuttle.TryFTLDock(newShipGridUid, shuttleComponent, targetGrid);
-                _sawmill.Info($"Attempted to dock ship {newShipGridUid} to console grid {targetGrid}");
+                // Attempted to dock ship
             }
 
             // Add deed to the ID card in the console - mark as loaded to prevent exploits
             var deedComponent = EnsureComp<ShuttleDeedComponent>(idCardInConsole.Value);
-            AssignShuttleDeedProperties((idCardInConsole.Value, deedComponent), newShipGridUid, finalShipName, playerSession.Name, true); // Mark as loaded
+            deedComponent.ShuttleUid = GetNetEntity(newShipGridUid);
+            TryParseShuttleName(deedComponent, finalShipName);
+            deedComponent.ShuttleOwner = playerSession.Name;
+            deedComponent.PurchasedWithVoucher = true; // Mark as loaded
             _sawmill.Info($"Added deed to ID card in console {idCardInConsole.Value}");
 
             // Also add deed to the ship itself (like purchased ships) but mark as loaded (not purchasable)
             var shipDeedComponent = EnsureComp<ShuttleDeedComponent>(newShipGridUid);
-            AssignShuttleDeedProperties((newShipGridUid, shipDeedComponent), newShipGridUid, finalShipName, playerSession.Name, true); // Mark as loaded to prevent sale
+            shipDeedComponent.ShuttleUid = GetNetEntity(newShipGridUid);
+            TryParseShuttleName(shipDeedComponent, finalShipName);
+            shipDeedComponent.ShuttleOwner = playerSession.Name;
+            shipDeedComponent.PurchasedWithVoucher = true; // Mark as loaded to prevent sale
 
             // Station information already set up above during station creation
 
@@ -258,7 +283,7 @@ public sealed partial class ShipyardSystem : SharedShipyardSystem
                 SendLoadMessage(targetConsole.Value, playerEntity, finalShipName, consoleComponent.ShipyardChannel);
                 if (consoleComponent.SecretShipyardChannel is { } secretChannel)
                     SendLoadMessage(targetConsole.Value, playerEntity, finalShipName, secretChannel, secret: true);
-                _sawmill.Info($"Sent radio announcements for loaded ship {finalShipName}");
+                // Sent radio announcements
             }
 
             // Play success sound like purchase confirmation 
@@ -278,7 +303,7 @@ public sealed partial class ShipyardSystem : SharedShipyardSystem
             // Handle legacy ship conversion - force update the file to new secure format
             if (wasLegacyConverted)
             {
-                _sawmill.Warning($"Legacy SHA ship detected - forcing conversion to secure format for player {playerSession.Name}");
+                _sawmill.Info($"SECURITY: Converting legacy SHA ship to secure format for {playerSession.Name}");
                 
                 var convertedYaml = shipSerializationSystem.GetConvertedLegacyShipYaml(shipGridData, playerSession.Name, message.YamlData);
                 if (!string.IsNullOrEmpty(convertedYaml))
@@ -291,7 +316,7 @@ public sealed partial class ShipyardSystem : SharedShipyardSystem
                     };
                     
                     RaiseNetworkEvent(conversionMessage, playerSession);
-                    _sawmill.Info($"Sent converted ship file to player {playerSession.Name} - legacy file automatically upgraded to secure format");
+                    // Sent converted ship file
                     
                     // Admin log for security audit trail
                     _adminLogger.Add(LogType.ShipYardUsage, LogImpact.High, $"Legacy SHA ship '{finalShipName}' automatically converted to secure format for player {playerSession.Name}");
@@ -302,11 +327,11 @@ public sealed partial class ShipyardSystem : SharedShipyardSystem
                 }
             }
             
-            _sawmill.Info($"Successfully loaded and docked ship {shipGridData.Metadata.ShipName} for player {playerSession.Name}");
+            // Ship loading completed
         }
         catch (InvalidOperationException e)
         {
-            _sawmill.Error($"Ship loading failed for {playerSession.Name} due to data tampering: {e.Message}");
+            _sawmill.Error($"SECURITY VIOLATION: Ship load failed for {playerSession.Name} - tampering detected: {e.Message}");
             
             // Show clear message for any InvalidOperationException (including checksum failures)
             var playerEntity = playerSession.AttachedEntity;
@@ -326,7 +351,7 @@ public sealed partial class ShipyardSystem : SharedShipyardSystem
         }
         catch (UnauthorizedAccessException e)
         {
-            _sawmill.Error($"Ship loading failed for {playerSession.Name} due to unauthorized access: {e.Message}");
+            _sawmill.Error($"SECURITY: Unauthorized ship load attempt by {playerSession.Name}: {e.Message}");
         }
         catch (Exception e)
         {
