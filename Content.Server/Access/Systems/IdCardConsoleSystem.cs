@@ -220,7 +220,7 @@ public sealed class IdCardConsoleSystem : SharedIdCardConsoleSystem
             return;
         else
         {
-            if (Deleted(shuttleDeed!.ShuttleUid))
+            if (shuttleDeed!.ShuttleUid == null || (TryGetEntity(shuttleDeed.ShuttleUid.Value, out var shuttleEntity) && Deleted(shuttleEntity.Value)))
             {
                 RemComp<ShuttleDeedComponent>(targetId);
                 return;

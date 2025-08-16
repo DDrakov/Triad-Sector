@@ -1,8 +1,8 @@
 <controls:FancyWindow xmlns="https://spacestation14.io"
                            xmlns:gfx="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client"
                            xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
-                           SetSize="640 600"
-                           MinSize="640 450">
+                           SetSize="900 600"
+                           MinSize="900 450">
     <PanelContainer VerticalExpand="True" HorizontalExpand="True" Margin="0 8 0 2">
         <PanelContainer.PanelOverride>
             <gfx:StyleBoxFlat BorderThickness="7" BorderColor="#252525" BackgroundColor="#3d474d"/>
@@ -95,7 +95,7 @@
                 <PanelContainer.PanelOverride>
                     <gfx:StyleBoxFlat BorderThickness="3" BorderColor="#636363" BackgroundColor="#141414"/>
                 </PanelContainer.PanelOverride>
-        <GridContainer Columns="4" HorizontalExpand="True" Margin="2 2 2 2">
+        <GridContainer Columns="5" HorizontalExpand="True" Margin="0 8 0 2">
             <Button Name="TargetIdButton" Access="Public"
                     StyleClasses="ButtonSquare"/>
             <controls:ConfirmButton Name="SellShipButton"
@@ -107,6 +107,14 @@
                 Text="{Loc 'shipyard-console-unassign-deed'}"
                 ConfirmationText="{Loc 'shipyard-console-confirm-unassign'}"
                 StyleClasses="ButtonSquare"
+                Disabled="True"
+                StyleClasses="ButtonCaution" />
+            <Button Name="SaveShipButton"
+                Text="Save Ship (Dino &amp; Venom Double Doc Special)"
+                Disabled="True"
+                StyleClasses="ButtonCaution" />
+            <Button Name="LoadShipButton"
+                Text="Load Ship"
                 Disabled="True" />
             <BoxContainer Orientation="Vertical">
                 <Label Text="{Loc 'shipyard-console-deed-label'}" />
@@ -136,6 +144,12 @@
                 <TextureRect StyleClasses="NTLogoDark" Stretch="KeepAspectCentered"
                              VerticalAlignment="Center" HorizontalAlignment="Right" SetSize="19 19"/>
             </BoxContainer>
+        </BoxContainer>
+        <BoxContainer Orientation="Vertical" HorizontalExpand="True" Margin="0 8 0 2">
+            <Label Text="Saved Ships:" />
+            <ItemList Name="SavedShipsList" 
+                      MinSize="0 100"
+                      HorizontalExpand="True" />
         </BoxContainer>
     </BoxContainer>
         </PanelContainer>

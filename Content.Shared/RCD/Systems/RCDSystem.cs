@@ -130,6 +130,7 @@ public class RCDSystem : EntitySystem
 
         args.PushMarkup(msg);
     }
+
     private void OnAfterInteract(EntityUid uid, RCDComponent component, AfterInteractEvent args)
     {
         if (args.Handled || !args.CanReach)

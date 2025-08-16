@@ -1,5 +1,5 @@
-using Content.Shared._NF.ShuttleRecords;
-using Robust.Shared.GameStates;
+using Robust.Shared.GameObjects;
+using Robust.Shared.Serialization.Manager.Attributes;
 using Content.Shared.Shuttles.Systems;
 
 namespace Content.Shared._NF.Shipyard.Components;

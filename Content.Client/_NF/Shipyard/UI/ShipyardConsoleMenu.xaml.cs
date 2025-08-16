@@ -18,6 +18,7 @@ public sealed partial class ShipyardConsoleMenu : FancyWindow
     [Dependency] private readonly IPrototypeManager _protoManager = default!;
 
     public event Action<ButtonEventArgs>? OnSellShip;
+    public event Action<ButtonEventArgs>? OnSaveShip;
     public event Action<ButtonEventArgs>? OnOrderApproved;
     public event Action<ButtonEventArgs>? OnUnassignDeed;
     public event Action<string>? OnRenameShip;
@@ -47,6 +48,7 @@ public sealed partial class ShipyardConsoleMenu : FancyWindow
         SellShipButton.OnPressed += (args) => { OnSellShip?.Invoke(args); };
         UnassignDeedButton.OnPressed += (args) => { OnUnassignDeed?.Invoke(args); };
         RenameButton.OnPressed += OnRenameButtonPressed;
+        SaveShipButton.OnPressed += (args) => { OnSaveShip?.Invoke(args); };
     }
 
 
@@ -315,6 +317,7 @@ public sealed partial class ShipyardConsoleMenu : FancyWindow
         RenameLineEdit.Editable = hasShipDeed;
         RenameButton.Disabled = !hasShipDeed;
 
+        SaveShipButton.Disabled = state.ShipDeedTitle == null;
         TargetIdButton.Text = state.IsTargetIdPresent
             ? Loc.GetString("id-card-console-window-eject-button")
             : Loc.GetString("id-card-console-window-insert-button");
