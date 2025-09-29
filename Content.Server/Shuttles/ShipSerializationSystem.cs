@@ -47,6 +47,7 @@ using Robust.Shared.Serialization.Markdown;
 using Content.Shared.VendingMachines;
 using Robust.Shared.EntitySerialization.Systems; // Added for MapLoaderSystem
 using Robust.Shared.EntitySerialization;
+using Content.Shared.Access.Components; // AccessReaderComponent for access retention
 using Robust.Shared.Serialization.Manager; // For DataNodeParser
 using Robust.Shared.Map.Events; // For BeforeEntityReadEvent
 
@@ -136,7 +137,7 @@ namespace Content.Server.Shuttles.Save
                         try
                         {
                             var coordinates = new EntityCoordinates(job.GridOwner, entityData.Position);
-                            var newEntity = SpawnEntityWithComponents(entityData, coordinates);
+                            var newEntity = SpawnEntityWithComponents(entityData, coordinates, job.ClearDefaultsForContainers);
                             if (newEntity != null)
                             {
                                 job.IdMap[entityData.EntityId] = newEntity.Value;
@@ -168,7 +169,7 @@ namespace Content.Server.Shuttles.Save
                         try
                         {
                             var tempCoordinates = new EntityCoordinates(job.GridOwner, Vector2.Zero);
-                            var containedEntity = SpawnEntityWithComponents(entityData, tempCoordinates);
+                            var containedEntity = SpawnEntityWithComponents(entityData, tempCoordinates, job.ClearDefaultsForContainers);
 
                             if (containedEntity != null)
                             {
@@ -256,6 +257,10 @@ namespace Content.Server.Shuttles.Save
             public int SpawnedContained;
             public int FailedContained;
             public bool Complete;
+            // If true, when spawning container owners we clear their default contents
+            // so we can reinsert saved contents. For legacy saves (no container data),
+            // this must be false to preserve prototype defaults like electronics.
+            public bool ClearDefaultsForContainers = true;
         }
 
         private readonly List<ShipLoadJob> _shipLoadJobs = new();
@@ -1102,6 +1107,10 @@ namespace Content.Server.Shuttles.Save
             // Primary grid tiles
             
             var newGrid = _mapManager.CreateGrid(targetMap);
+            // Ensure the reconstructed grid participates in physics so docking can create an actual joint.
+            // Without a PhysicsComponent on the grid, DockingSystem.Dock will set DockedWith but skip joint creation.
+            // Ensure a PhysicsComponent exists so DockingSystem can create a weld joint between grids.
+            _entityManager.EnsureComponent<Robust.Shared.Physics.Components.PhysicsComponent>(newGrid.Owner);
             // Created new grid
             
             // Note: Grid splitting prevention would require internal access
@@ -1224,7 +1233,7 @@ namespace Content.Server.Shuttles.Save
                 _sawmill.Info("Legacy save detected - no container data found");
                 if (enableAsync)
                 {
-                    var job = new ShipLoadJob { GridOwner = newGrid.Owner };
+                    var job = new ShipLoadJob { GridOwner = newGrid.Owner, ClearDefaultsForContainers = false };
                     foreach (var entity in primaryGridData.Entities)
                     {
                         if (string.IsNullOrEmpty(entity.Prototype))
@@ -1247,7 +1256,8 @@ namespace Content.Server.Shuttles.Save
                 }
                 else
                 {
-                    ReconstructEntitiesLegacyMode(primaryGridData, newGrid, entityIdMapping);
+                    // In legacy mode we must not clear container defaults (electronics/boards)
+                    ReconstructEntitiesLegacyMode(primaryGridData, newGrid, entityIdMapping, clearDefaults: false);
                     return newGrid.Owner;
                 }
             }
@@ -1275,7 +1285,7 @@ namespace Content.Server.Shuttles.Save
                 var job = _shipLoadJobs.Find(j => j.GridOwner == newGrid.Owner);
                 if (job == null)
                 {
-                    job = new ShipLoadJob { GridOwner = newGrid.Owner };
+                    job = new ShipLoadJob { GridOwner = newGrid.Owner, ClearDefaultsForContainers = true };
                     _shipLoadJobs.Add(job);
                 }
                 foreach (var e in nonContainedEntities)
@@ -1290,7 +1300,8 @@ namespace Content.Server.Shuttles.Save
                     try
                     {
                         var coordinates = new EntityCoordinates(newGrid.Owner, entityData.Position);
-                        var newEntity = SpawnEntityWithComponents(entityData, coordinates);
+                        // In standard sync load we clear defaults so saved container contents can be re-inserted
+                        var newEntity = SpawnEntityWithComponents(entityData, coordinates, clearDefaultsForContainers: true);
                         if (newEntity != null)
                         {
                             entityIdMapping[entityData.EntityId] = newEntity.Value;
@@ -1324,7 +1335,8 @@ namespace Content.Server.Shuttles.Save
                     try
                     {
                         var tempCoordinates = new EntityCoordinates(newGrid.Owner, Vector2.Zero);
-                        var containedEntity = SpawnEntityWithComponents(entityData, tempCoordinates);
+                        // In standard sync load we clear defaults for containers; legacy path handles false separately
+                        var containedEntity = SpawnEntityWithComponents(entityData, tempCoordinates, clearDefaultsForContainers: true);
                         if (containedEntity != null)
                         {
                             entityIdMapping[entityData.EntityId] = containedEntity.Value;
@@ -1388,6 +1400,8 @@ namespace Content.Server.Shuttles.Save
             _sawmill.Info($"Created new map {mapId}");
             
             var newGrid = _mapManager.CreateGrid(mapId);
+            // Ensure the new grid has physics so any subsequent docking attaches a weld joint properly.
+            _entityManager.EnsureComponent<Robust.Shared.Physics.Components.PhysicsComponent>(newGrid.Owner);
             _sawmill.Info($"Created new grid {newGrid.Owner} on map {mapId}");
 
             // Reconstruct tiles in connectivity order to prevent grid splitting
@@ -1908,15 +1922,19 @@ namespace Content.Server.Shuttles.Save
             // Known problematic component types from logs
             var problematicTypes = new[]
             {
+                // Client / mind / player / UI heavy
                 "ActionsComponent", "ItemSlotsComponent", "InventoryComponent", "SlotManagerComponent",
                 "HandsComponent", "BodyComponent", "PlayerInputMoverComponent", "GhostComponent",
                 "MindComponent", "MovementSpeedModifierComponent", "InputMoverComponent",
-                "ActorComponent", "DamageableComponent", "ThermalRegulatorComponent", "FlammableComponent",
-                "DamageTriggerComponent", "AtmosDeviceComponent", "NodeContainerComponent",
-                "DeviceNetworkComponent", "StatusEffectsComponent", "BloodstreamComponent",
-                "FixtureComponent", "InventoryComponent", "RadioComponent", "InteractionOutlineComponent",
-                "SolutionScannerComponent", "AirlockComponent", "WiresComponent",
-                "VendingMachineComponent" // Safety net for unmapped vending machines
+                "ActorComponent", "StatusEffectsComponent", "BloodstreamComponent",
+                // Physics fixtures get rebuilt
+                "FixtureComponent",
+                // Low-value visuals or radio UI-only bits
+                "RadioComponent", "InteractionOutlineComponent",
+                // Scan-only
+                "SolutionScannerComponent",
+                // Safety: still skip vending machines entirely if flagged elsewhere
+                "VendingMachineComponent"
             };
 
             return problematicTypes.Contains(typeName);
@@ -2044,6 +2062,10 @@ namespace Content.Server.Shuttles.Save
 
             // IFF and ship identification components
             if (typeName.Contains("IFF") || typeName.Contains("Identification") || typeName.Contains("Identity"))
+                return true;
+
+            // Access control: doors, airlocks, consoles using AccessReader must retain configuration.
+            if (typeName.Contains("AccessReader"))
                 return true;
 
             return false;
@@ -2444,7 +2466,7 @@ namespace Content.Server.Shuttles.Save
             }
         }
 
-        private EntityUid? SpawnEntityWithComponents(EntityData entityData, EntityCoordinates coordinates)
+        private EntityUid? SpawnEntityWithComponents(EntityData entityData, EntityCoordinates coordinates, bool clearDefaultsForContainers = true)
         {
             try
             {
@@ -2460,10 +2482,20 @@ namespace Content.Server.Shuttles.Save
 
                 // Clear any default container contents to prevent duplicates
                 // This ensures saved containers don't get refilled with prototype defaults
-                if (entityData.IsContainer && _entityManager.TryGetComponent<ContainerManagerComponent>(newEntity, out var containerManager))
+                if (clearDefaultsForContainers && entityData.IsContainer && _entityManager.TryGetComponent<ContainerManagerComponent>(newEntity, out var containerManager))
                 {
+                    // If this entity uses an AccessReader that pulls requirements from a specific container,
+                    // don't clear that container or we may wipe its configured access provider board.
+                    AccessReaderComponent? accessReaderOnOwner = null;
+                    _entityManager.TryGetComponent(newEntity, out accessReaderOnOwner);
+
                     foreach (var container in containerManager.Containers.Values)
                     {
+                        if (accessReaderOnOwner != null && accessReaderOnOwner.ContainerAccessProvider == container.ID)
+                            continue;
+                        // Do not clear powered light bulb containers; ships would spawn dark.
+                        if (container.ID == Content.Server.Light.EntitySystems.PoweredLightSystem.LightBulbContainer)
+                            continue;
                         // Clear default spawned items - we'll restore saved contents later
                         var defaultItems = container.ContainedEntities.ToList();
                         foreach (var defaultItem in defaultItems)
@@ -2668,7 +2700,7 @@ namespace Content.Server.Shuttles.Save
             }
         }
 
-        private void ReconstructEntitiesLegacyMode(GridData gridData, MapGridComponent newGrid, Dictionary<string, EntityUid> entityIdMapping)
+        private void ReconstructEntitiesLegacyMode(GridData gridData, MapGridComponent newGrid, Dictionary<string, EntityUid> entityIdMapping, bool clearDefaults = false)
         {
             _sawmill.Info("Using legacy reconstruction mode for backward compatibility");
             
@@ -2686,7 +2718,7 @@ namespace Content.Server.Shuttles.Save
                 try
                 {
                     var coordinates = new EntityCoordinates(newGrid.Owner, entityData.Position);
-                    var newEntity = SpawnEntityWithComponents(entityData, coordinates);
+                    var newEntity = SpawnEntityWithComponents(entityData, coordinates, clearDefaultsForContainers: clearDefaults);
                     
                     if (newEntity != null)
                     {

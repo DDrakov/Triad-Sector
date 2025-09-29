@@ -40,6 +40,13 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Robust.Shared.Configuration;
 using Content.Shared.HL.CCVar;
+using Robust.Shared.Serialization.Markdown;
+using Robust.Shared.Serialization.Markdown.Mapping;
+using Robust.Shared.Serialization.Markdown.Sequence;
+using Robust.Shared.Serialization.Markdown.Value;
+using YamlDotNet.RepresentationModel;
+using YamlDotNet.Core;
+using Robust.Shared.Serialization;
 
 // Suppress RA0004 for this file. There is no Task<Result> usage here, but the analyzer
 // occasionally reports a false positive during Release/integration builds.
@@ -182,81 +189,36 @@ public sealed class ShipyardGridSaveSystem : EntitySystem
 
         try
         {
-            _sawmill.Info($"Serializing ship grid {gridUid} as '{shipName}' using standard grid format (non-destructive save)");
+            _sawmill.Info($"Serializing ship grid {gridUid} as '{shipName}' using direct serialization (non-destructive save)");
 
-            // Use MapLoaderSystem to save directly to a temporary file in user data.
-            // Attach a temporary filter to optionally exclude vending machines from the save to avoid load-time spikes.
-            var excludeVending = _configManager.GetCVar(HLCCVars.ExcludeVendingInShipSave);
-            EntitySerializer.IsSerializableDelegate? veto = null;
-            if (excludeVending)
+            // 1) Serialize the grid and its children to a MappingDataNode (engine-standard format)
+            var entities = new HashSet<EntityUid> { gridUid };
+            // Prefer AutoInclude to pull in dependent entities; we'll sanitize nullspace and parents out below
+            var opts = SerializationOptions.Default with
             {
-                veto = (Entity<MetaDataComponent> ent, ref bool serializable) =>
-                {
-                    if (_entityManager.HasComponent<VendingMachineComponent>(ent))
-                        serializable = false;
-                };
-            }
-
-            // Add a veto to exclude obvious near-origin loose duplicates from being saved.
-            // This is a safety net so we never persist the post-load duplicate pile even if cleanup missed it.
-            EntitySerializer.IsSerializableDelegate originPileVeto = (Entity<MetaDataComponent> ent, ref bool serializable) =>
-            {
-                if (!_entityManager.TryGetComponent<TransformComponent>(ent, out var xform))
-                    return;
-                if (xform.GridUid != gridUid)
-                    return;
-                // Only consider directly parented, unanchored entities very close to origin.
-                if (xform.ParentUid != gridUid || xform.Anchored)
-                    return;
-                if (xform.LocalPosition.LengthSquared() > 3.0625f) // ~1.75 tiles
-                    return;
-
-                // Heuristic match list similar to load-time cleanup; skip structure components automatically.
-                var id = ent.Comp.EntityPrototype?.ID ?? string.Empty;
-                var low = id.ToLowerInvariant();
-                if (low.Contains("thruster") || low.Contains("console") || low.Contains("computer") || low.Contains("circuit") || low.Contains("board") || low.Contains("capacitor") || low.Contains("manipulator") || low.Contains("laser") || low.Contains("scanner") || low.Contains("matter") || low.Contains("tool") || low.Contains("lamp") || low.Contains("light") || low.Contains("bulb") || low.Contains("engine"))
-                {
-                    serializable = false;
-                }
+                // Do NOT auto-include referenced entities (players/admin observers/etc.).
+                // This prevents exceptions when encountering unserializable entities and keeps saves scoped to the grid.
+                MissingEntityBehaviour = MissingEntityBehaviour.Ignore,
+                ErrorOnOrphan = false,
+                // Disable auto-include logging to avoid excessive log spam/lag during saves.
+                LogAutoInclude = null
             };
-
-            var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
-            var fileName = $"{shipName}_{timestamp}.yml";
-            var tempFilePath = new ResPath("/") / "UserData" / fileName;
-
-            if (veto != null)
-                _mapLoader.OnIsSerializable += veto;
-            _mapLoader.OnIsSerializable += originPileVeto;
-            try
+            var (node, category) = _mapLoader.SerializeEntitiesRecursive(entities, opts);
+            if (category != FileCategory.Grid)
             {
-                var saved = _mapLoader.TrySaveGrid(gridUid, tempFilePath);
-                if (!saved)
-                {
-                    _sawmill.Error($"Failed to save grid {gridUid} to {fileName}");
-                    return false;
-                }
-            }
-            finally
-            {
-                if (veto != null)
-                    _mapLoader.OnIsSerializable -= veto;
-                _mapLoader.OnIsSerializable -= originPileVeto;
+                _sawmill.Warning($"Expected FileCategory.Grid but got {category}; continuing with sanitation");
             }
 
-            // Read the YAML we just wrote and send to the client for local saving.
-            string yaml;
-            using (var fileStream = _resourceManager.UserData.OpenRead(tempFilePath))
-            using (var reader = new StreamReader(fileStream))
-            {
-                yaml = reader.ReadToEnd();
-            }
+            // 2) Sanitize the node to match blueprint conventions
+            SanitizeShipSaveNode(node);
 
+            // 3) Convert MappingDataNode to YAML text without touching disk
+            var yaml = WriteYamlToString(node);
+
+            // 4) Send to client for local saving
             var saveMessage = new SendShipSaveDataClientMessage(shipName, yaml);
             RaiseNetworkEvent(saveMessage, playerSession);
             _sawmill.Info($"Sent ship data '{shipName}' to client {playerSession.Name} for local saving");
-
-            // Clean up the temporary file (best-effort).
-            _ = TryDeleteFileWithRetry(tempFilePath);
 
             // Fire ShipSavedEvent for bookkeeping; DO NOT delete the grid or maps here.
             var gridSavedEvent = new ShipSavedEvent
@@ -276,6 +238,158 @@ public sealed class ShipyardGridSaveSystem : EntitySystem
             _sawmill.Error($"Exception during non-destructive ship save: {ex}");
             return false;
         }
+    }
+
+    /// <summary>
+    /// Remove fields and components from the serialized YAML node to match blueprint output:
+    /// - Clear nullspace
+    /// - Remove mapInit/paused from entities
+    /// - Remove Transform.rot entries
+    /// - Remove SpreaderGrid update accumulator
+    /// - Remove components: Joint, StationMember, NavMap, ShuttleDeed, IFF, LinkedLifecycleGridParent
+    /// </summary>
+    private void SanitizeShipSaveNode(MappingDataNode root)
+    {
+        // Ensure nullspace is empty
+        try
+        {
+            root["nullspace"] = new SequenceDataNode();
+        }
+        catch (Exception e)
+        {
+            _sawmill.Warning($"Failed to clear nullspace: {e.Message}");
+        }
+
+        if (!root.TryGet("entities", out SequenceDataNode? protoSeq) || protoSeq == null)
+            return;
+
+        var filteredTypes = new HashSet<string>
+        {
+            "Joint",
+            "StationMember",
+            "NavMap",
+            "ShuttleDeed",
+            "IFF",
+            "LinkedLifecycleGridParent",
+        };
+
+        // Prototype-level exclusions for obvious non-ship entities.
+        // If we encounter these, we drop them entirely from the export.
+        var filteredPrototypes = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            // admin / ghost observers, spectators, etc.
+            "AdminObserver",
+            "AdminObserverDummy",
+            "Ghost",
+            "GhostRoleMob",
+        };
+
+        foreach (var protoNode in protoSeq)
+        {
+            if (protoNode is not MappingDataNode protoMap)
+                continue;
+
+            if (!protoMap.TryGet("entities", out SequenceDataNode? entitiesSeq) || entitiesSeq == null)
+                continue;
+
+            for (var i = 0; i < entitiesSeq.Count; i++)
+            {
+                if (entitiesSeq[i] is not MappingDataNode entMap)
+                    continue;
+
+                // Remove map initialization flags
+                entMap.Remove("mapInit");
+                entMap.Remove("paused");
+
+                // Optional: Drop entities that are clearly unrelated by prototype id.
+                // Each proto group node contains a "proto" key with the prototype id string.
+                if (protoMap.TryGet("proto", out ValueDataNode? protoIdNode) && protoIdNode != null)
+                {
+                    var protoId = protoIdNode.Value;
+                    if (filteredPrototypes.Contains(protoId))
+                    {
+                        // Remove this entity entirely
+                        entitiesSeq.RemoveAt(i);
+                        i--;
+                        continue;
+                    }
+                }
+
+                // Components cleanup
+                if (!entMap.TryGet("components", out SequenceDataNode? comps) || comps == null)
+                {
+                    // If there are no components left, this entity is empty and can be removed
+                    entitiesSeq.RemoveAt(i);
+                    i--;
+                    continue;
+                }
+
+                var newComps = new SequenceDataNode();
+                foreach (var compNode in comps)
+                {
+                    if (compNode is not MappingDataNode compMap)
+                        continue;
+
+                    if (!compMap.TryGet("type", out ValueDataNode? typeNode) || typeNode == null)
+                    {
+                        newComps.Add(compMap);
+                        continue;
+                    }
+
+                    var typeName = typeNode.Value;
+
+                    // Filter out undesired component types entirely
+                    if (filteredTypes.Contains(typeName))
+                        continue;
+
+                    // Preserve rotation: do NOT remove Transform.rot so entities keep their orientation on load.
+
+                    // SpreaderGrid: strip accumulator fields
+                    if (typeName == "SpreaderGrid")
+                    {
+                        compMap.Remove("updateAccumulator");
+                        compMap.Remove("UpdateAccumulator");
+                    }
+
+                    // VendingMachine: strip runtime inventory & timers to match blueprint expectations
+                    if (typeName == "VendingMachine")
+                    {
+                        compMap.Remove("Inventory");
+                        compMap.Remove("EmaggedInventory");
+                        compMap.Remove("ContrabandInventory");
+                        compMap.Remove("Contraband");
+                        compMap.Remove("EjectEnd");
+                        compMap.Remove("DenyEnd");
+                        compMap.Remove("DispenseOnHitEnd");
+                        compMap.Remove("NextEmpEject");
+                        compMap.Remove("EjectRandomCounter");
+                    }
+
+                    newComps.Add(compMap);
+                }
+
+                if (newComps.Count > 0)
+                {
+                    entMap["components"] = newComps;
+                }
+                else
+                {
+                    // No components left; remove the entire entity
+                    entitiesSeq.RemoveAt(i);
+                    i--;
+                }
+            }
+        }
+    }
+
+    private string WriteYamlToString(MappingDataNode node)
+    {
+        // Based on MapLoaderSystem.Write but to a string instead of file
+        var document = new YamlDocument(node.ToYaml());
+        using var writer = new StringWriter();
+        var stream = new YamlStream { document };
+        stream.Save(new YamlMappingFix(new Emitter(writer)), false);
+        return writer.ToString();
     }
 
     #region 5-Step Ship Save Process
@@ -422,7 +536,7 @@ public sealed class ShipyardGridSaveSystem : EntitySystem
                 if (!_entityManager.EntityExists(entity))
                     continue;
 
-                // Empty any containers by deleting their contents
+                // Empty any containers by removing their contents first (to clear InContainer flags client-side), then delete
                 if (_entityManager.TryGetComponent<ContainerManagerComponent>(entity, out var containerManager))
                 {
                     foreach (var container in containerManager.Containers.Values)
@@ -432,6 +546,8 @@ public sealed class ShipyardGridSaveSystem : EntitySystem
                         {
                             try
                             {
+                                // Properly remove from the container to ensure MetaDataFlags.InContainer is cleared everywhere
+                                _containerSystem.Remove(containedEntity, container, force: true);
                                 _entityManager.DeleteEntity(containedEntity);
                                 entitiesRemoved++;
                             }

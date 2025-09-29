@@ -64,9 +64,34 @@ namespace Content.Server.Shuttles.Save
             Logger.Info($"Player {playerSession.Name} is saving deed-referenced ship {shipName} (grid {gridToSave})");
             var success = shipyardGridSaveSystem.TrySaveGridAsShip(gridToSave, shipName, playerSession.UserId.ToString(), playerSession);
             if (success)
+            {
                 Logger.Info($"Successfully saved ship {shipName}");
+                // Mirror ShipyardGridSaveSystem deed/grid cleanup to avoid stale ownership
+                if (_entityManager.TryGetComponent<ShuttleDeedComponent>(deedUid, out var deedComp))
+                {
+                    _entityManager.RemoveComponent<ShuttleDeedComponent>(deedUid);
+                }
+
+                // Remove any other deeds that referenced this shuttle
+                var toRemove = new List<EntityUid>();
+                var query = _entityManager.EntityQueryEnumerator<ShuttleDeedComponent>();
+                while (query.MoveNext(out var ent, out var deedRef))
+                {
+                    if (deedRef.ShuttleUid != null && _entityManager.TryGetEntity(deedRef.ShuttleUid.Value, out var entUid) && entUid == gridToSave)
+                        toRemove.Add(ent);
+                }
+                foreach (var uidToClear in toRemove)
+                {
+                    _entityManager.RemoveComponent<ShuttleDeedComponent>(uidToClear);
+                }
+
+                // Delete the live grid after save to reset ownership chain
+                _entityManager.QueueDeleteEntity(gridToSave);
+            }
             else
+            {
                 Logger.Error($"Failed to save ship {shipName}");
+            }
         }
         public void RequestSaveShip(EntityUid deedUid, ICommonSession? playerSession)
         {

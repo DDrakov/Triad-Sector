@@ -14,6 +14,7 @@ using Robust.Shared.Physics.Components;
 using Robust.Shared.Physics.Dynamics.Joints;
 using Robust.Shared.Physics.Systems;
 using Robust.Shared.Utility;
+using Robust.Shared.Log;
 
 namespace Content.Server.Shuttles.Systems
 {
@@ -31,6 +32,8 @@ namespace Content.Server.Shuttles.Systems
 
         private const string DockingJoint = "docking";
 
+        private ISawmill _sawmill = default!;
+
         private EntityQuery<MapGridComponent> _gridQuery;
         private EntityQuery<PhysicsComponent> _physicsQuery;
         private EntityQuery<TransformComponent> _xformQuery;
@@ -41,6 +44,7 @@ namespace Content.Server.Shuttles.Systems
         public override void Initialize()
         {
             base.Initialize();
+            _sawmill = Logger.GetSawmill("docking");
             _gridQuery = GetEntityQuery<MapGridComponent>();
             _physicsQuery = GetEntityQuery<PhysicsComponent>();
             _xformQuery = GetEntityQuery<TransformComponent>();
@@ -304,6 +308,15 @@ namespace Content.Server.Shuttles.Systems
 
                 dockB.Comp.DockJoint = joint;
                 dockB.Comp.DockJointId = joint.ID;
+                _sawmill.Debug($"Created weld joint '{joint.ID}' between grids {gridA} and {gridB} for docks {dockAUid} <-> {dockBUid}.");
+            }
+            else
+            {
+                // If either grid lacks physics we cannot create a weld joint; docking will be visual/logic-only.
+                if (!hasPhysA)
+                    _sawmill.Warning($"Docking without PhysicsComponent on gridA {gridA}. No weld joint will be created.");
+                if (!hasPhysB)
+                    _sawmill.Warning($"Docking without PhysicsComponent on gridB {gridB}. No weld joint will be created.");
             }
 
             dockA.Comp.DockedWith = dockBUid;
