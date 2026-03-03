@@ -17717,3 +17717,16 @@ Entries:
   id: 1952
   time: '2026-03-03T17:07:25.0000000+00:00'
   url: https://github.com/Monolith-Station/Monolith/pull/3055
+- author: burrrkeye
+  changes:
+    - type: Tweak
+      message: >-
+        PDV suits with the exception of stealth and juggernaut suits now have
+        Sechuds, PDV SCAF now has a flashlight still keeping its thermals.
+    - type: Tweak
+      message: >-
+        PDV Neptune recieved its IFF and Station Records consoles, positions of
+        the cage recharger and borg recharger were swapped
+  id: 1953
+  time: '2026-03-03T17:27:26.0000000+00:00'
+  url: https://github.com/Monolith-Station/Monolith/pull/3325
