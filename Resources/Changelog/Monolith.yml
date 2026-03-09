@@ -18150,3 +18150,10 @@ Entries:
   id: 2001
   time: '2026-03-09T19:54:17.0000000+00:00'
   url: https://github.com/Monolith-Station/Monolith/pull/3422
+- author: Redrover1760
+  changes:
+    - type: Tweak
+      message: Jetpacks show blips again now
+  id: 2002
+  time: '2026-03-09T20:39:45.0000000+00:00'
+  url: https://github.com/Monolith-Station/Monolith/pull/3423
