@@ -18269,3 +18269,10 @@ Entries:
   id: 2015
   time: '2026-03-15T14:13:49.0000000+00:00'
   url: https://github.com/Monolith-Station/Monolith/pull/3174
+- author: Onezero0
+  changes:
+    - type: Add
+      message: Added some more decals for mappers. Search "Greeble" in entityspawn.
+  id: 2016
+  time: '2026-03-15T14:19:46.0000000+00:00'
+  url: https://github.com/Monolith-Station/Monolith/pull/3450
