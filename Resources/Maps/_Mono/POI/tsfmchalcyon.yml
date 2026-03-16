@@ -6409,7 +6409,7 @@ entities:
     - type: Transform
       pos: 6.4822087,-3.4063356
       parent: 1
-- proto: AmmoBox762x54mmRPractice
+- proto: AmmoBox762x51mmPractice
   entities:
   - uid: 336
     components:

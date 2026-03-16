@@ -53,24 +53,6 @@
   - AmmoBox762x51mmUranium
   - AmmoBox762x51mmHP
   - AmmoBox762x51mmRIP
-  - Magazine762x54mmRFMJ
-  - Magazine762x54mmRPlasteelAP
-  - Magazine762x54mmRRubber
-  - Magazine762x54mmRIncendiary
-  - Magazine762x54mmRPractice
-  - Magazine762x54mmREmpty
-  - Magazine762x54mmRUranium
-  - Magazine762x54mmRHP
-  - Magazine762x54mmRRIP
-  - SpeedLoader762x54mmRFMJ
-  - AmmoBox762x54mmRFMJ
-  - AmmoBox762x54mmRPlasteelAP
-  - AmmoBox762x54mmRRubber
-  - AmmoBox762x54mmRIncendiary
-  - AmmoBox762x54mmRPractice
-  - AmmoBox762x54mmRUranium
-  - AmmoBox762x54mmRHP
-  - AmmoBox762x54mmRRIP
   - AmmoBox145x114mm
   - AmmoBox145x114mmBig
   - Magazine556x45mmFMJ
@@ -218,8 +200,6 @@
   - AmmoBox12_gaugeUranium
   - Magazine762x51mmUranium
   - AmmoBox762x51mmUranium
-  - Magazine762x54mmRUranium
-  - AmmoBox762x54mmRUranium
   - Magazine556x45mmUranium
   - SpeedLoader556x45mmUranium
   - AmmoBox556x45mmUranium
@@ -240,7 +220,6 @@
 
   - Magazine12_gaugeEmpty
   - Magazine762x51mmEmpty
-  - Magazine762x54mmREmpty
   - Magazine556x45mmEmpty
   - SpeedLoader556x45mmEmpty
   - Magazine762x39mmEmpty
@@ -260,8 +239,6 @@
   - AmmoBox12_gaugePractice
   - Magazine762x51mmPractice
   - AmmoBox762x51mmPractice
-  - Magazine762x54mmRPractice
-  - AmmoBox762x54mmRPractice
   - Magazine556x45mmPractice
   - SpeedLoader556x45mmPractice
   - AmmoBox556x45mmPractice
@@ -285,8 +262,6 @@
   - AmmoBox12_gaugeIncendiary
   - Magazine762x51mmIncendiary
   - AmmoBox762x51mmIncendiary
-  - Magazine762x54mmRIncendiary
-  - AmmoBox762x54mmRIncendiary
   - Magazine556x45mmIncendiary
   - SpeedLoader556x45mmIncendiary
   - AmmoBox556x45mmIncendiary
@@ -308,8 +283,6 @@
 
   - Magazine762x51mmRubber
   - AmmoBox762x51mmRubber
-  - Magazine762x54mmRRubber
-  - AmmoBox762x54mmRRubber
   - Magazine556x45mmRubber
   - SpeedLoader556x45mmRubber
   - AmmoBox556x45mmRubber
@@ -336,9 +309,6 @@
   - AmmoBox12_gaugeBuckshot
   - Magazine762x51mmFMJ
   - AmmoBox762x51mmFMJ
-  - Magazine762x54mmRFMJ
-  - SpeedLoader762x54mmRFMJ
-  - AmmoBox762x54mmRFMJ
   - Magazine556x45mmFMJ
   - SpeedLoader556x45mmFMJ
   - AmmoBox556x45mmFMJ
@@ -369,8 +339,6 @@
 
   - Magazine762x51mmPlasteelAP
   - AmmoBox762x51mmPlasteelAP
-  - Magazine762x54mmRPlasteelAP
-  - AmmoBox762x54mmRPlasteelAP
   - Magazine556x45mmPlasteelAP
   - AmmoBox556x45mmPlasteelAP
   - Magazine762x39mmPlasteelAP
@@ -395,8 +363,6 @@
 
   - Magazine762x51mmHP
   - AmmoBox762x51mmHP
-  - Magazine762x54mmRHP
-  - AmmoBox762x54mmRHP
   - Magazine556x45mmHP
   - AmmoBox556x45mmHP
   - Magazine762x39mmHP
@@ -418,8 +384,6 @@
   - AmmoBox12_gaugeSlugRIP
   - Magazine762x51mmRIP
   - AmmoBox762x51mmRIP
-  - Magazine762x54mmRRIP
-  - AmmoBox762x54mmRRIP
   - Magazine556x45mmRIP
   - AmmoBox556x45mmRIP
   - Magazine762x39mmRIP
@@ -446,9 +410,6 @@
   - AmmoBox12_gaugeBuckshot
   - Magazine762x51mmFMJ
   - AmmoBox762x51mmFMJ
-  - Magazine762x54mmRFMJ
-  - SpeedLoader762x54mmRFMJ
-  - AmmoBox762x54mmRFMJ
   - Magazine556x45mmFMJ
   - SpeedLoader556x45mmFMJ
   - AmmoBox556x45mmFMJ
@@ -482,8 +443,6 @@
   - AmmoBox12_gaugePractice
   - Magazine762x51mmPractice
   - AmmoBox762x51mmPractice
-  - Magazine762x54mmRPractice
-  - AmmoBox762x54mmRPractice
   - Magazine556x45mmPractice
   - SpeedLoader556x45mmPractice
   - AmmoBox556x45mmPractice
@@ -504,7 +463,6 @@
 
   - Magazine12_gaugeEmpty
   - Magazine762x51mmEmpty
-  - Magazine762x54mmREmpty
   - Magazine556x45mmEmpty
   - SpeedLoader556x45mmEmpty
   - Magazine762x39mmEmpty
@@ -521,8 +479,6 @@
 
   - Magazine762x51mmRubber
   - AmmoBox762x51mmRubber
-  - Magazine762x54mmRRubber
-  - AmmoBox762x54mmRRubber
   - Magazine556x45mmRubber
   - SpeedLoader556x45mmRubber
   - AmmoBox556x45mmRubber
@@ -546,8 +502,6 @@
 
   - Magazine762x51mmHP
   - AmmoBox762x51mmHP
-  - Magazine762x54mmRHP
-  - AmmoBox762x54mmRHP
   - Magazine556x45mmHP
   - AmmoBox556x45mmHP
   - Magazine762x39mmHP
@@ -574,8 +528,6 @@
   - AmmoBox12_gaugeUranium
   - Magazine762x51mmUranium
   - AmmoBox762x51mmUranium
-  - Magazine762x54mmRUranium
-  - AmmoBox762x54mmRUranium
   - Magazine556x45mmUranium
   - SpeedLoader556x45mmUranium
   - AmmoBox556x45mmUranium
@@ -599,8 +551,6 @@
   - AmmoBox12_gaugeIncendiary
   - Magazine762x51mmIncendiary
   - AmmoBox762x51mmIncendiary
-  - Magazine762x54mmRIncendiary
-  - AmmoBox762x54mmRIncendiary
   - Magazine556x45mmIncendiary
   - SpeedLoader556x45mmIncendiary
   - AmmoBox556x45mmIncendiary
@@ -622,8 +572,6 @@
 
   - Magazine762x51mmPlasteelAP
   - AmmoBox762x51mmPlasteelAP
-  - Magazine762x54mmRPlasteelAP
-  - AmmoBox762x54mmRPlasteelAP
   - Magazine556x45mmPlasteelAP
   - AmmoBox556x45mmPlasteelAP
   - Magazine762x39mmPlasteelAP
@@ -651,8 +599,6 @@
   - AmmoBox12_gaugeSlugRIP
   - Magazine762x51mmRIP
   - AmmoBox762x51mmRIP
-  - Magazine762x54mmRRIP
-  - AmmoBox762x54mmRRIP
   - Magazine556x45mmRIP
   - AmmoBox556x45mmRIP
   - Magazine762x39mmRIP
@@ -686,7 +632,6 @@
 #Big Ammo Boxes
   - AmmoBox762x39mmBigFMJ
   - AmmoBox762x51mmBigFMJ
-  - AmmoBox762x54mmRBigFMJ
   - AmmoBox9x19mmBigFMJ
   - AmmoBox45_ACPBigFMJ
   - AmmoBox45_magnumBigFMJ

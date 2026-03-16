@@ -397,7 +397,7 @@
     contents:
     - id: WeaponRifleSVS
       amount: 1
-    - id: Magazine762x54mmRFMJ
+    - id: Magazine762x51mmFMJ
       amount: 2
 
 - type: entity

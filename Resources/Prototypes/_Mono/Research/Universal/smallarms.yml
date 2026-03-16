@@ -11,8 +11,6 @@
   recipeUnlocks:
   - Magazine762x51mmPlasteelAP
   - AmmoBox762x51mmPlasteelAP
-  - Magazine762x54mmRPlasteelAP
-  - AmmoBox762x54mmRPlasteelAP
   - Magazine556x45mmPlasteelAP
   - AmmoBox556x45mmPlasteelAP
   - Magazine762x39mmPlasteelAP
@@ -47,8 +45,6 @@
 #  recipeUnlocks:
 #  - Magazine762x51mmSynthAP
 #  - AmmoBox762x51mmSynthAP
-#  - Magazine762x54mmRSynthAP
-#  - AmmoBox762x54mmRSynthAP
 #  - Magazine556x45mmSynthAP
 #  - AmmoBox556x45mmSynthAP
 #  - Magazine762x39mmSynthAP
@@ -79,8 +75,6 @@
   - AmmoBox12_gaugeSlugRIP
   - Magazine762x51mmRIP
   - AmmoBox762x51mmRIP
-  - Magazine762x54mmRRIP
-  - AmmoBox762x54mmRRIP
   - Magazine556x45mmRIP
   - AmmoBox556x45mmRIP
   - Magazine762x39mmRIP
@@ -108,8 +102,6 @@
   - AmmoBox12_gaugeIncendiary
   - Magazine762x51mmIncendiary
   - AmmoBox762x51mmIncendiary
-  - Magazine762x54mmRIncendiary
-  - AmmoBox762x54mmRIncendiary
   - Magazine556x45mmIncendiary
   - SpeedLoader556x45mmIncendiary
   - AmmoBox556x45mmIncendiary
@@ -143,8 +135,6 @@
   - AmmoBox12_gaugeUranium
   - Magazine762x51mmUranium
   - AmmoBox762x51mmUranium
-  - Magazine762x54mmRUranium
-  - AmmoBox762x54mmRUranium
   - Magazine556x45mmUranium
   - SpeedLoader556x45mmUranium
   - AmmoBox556x45mmUranium

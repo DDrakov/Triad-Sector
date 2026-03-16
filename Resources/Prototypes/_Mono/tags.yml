@@ -73,17 +73,6 @@
 - type: Tag
   id: Magazine762x51mmBoxBig
 
-#762x54mmR tags
-
-- type: Tag
-  id: Cartridge762x54mmRFMJ
-
-- type: Tag
-  id: Magazine762x54mmRFMJ
-
-- type: Tag
-  id: Magazine762x54mmRBox
-
 #556x45mm tags
 
 - type: Tag
