@@ -16,6 +16,7 @@ hud-chatbox-select-channel-Damage = Damage
 hud-chatbox-select-channel-CollectiveMind = Collective Mind
 hud-chatbox-select-channel-Visual = Actions
 hud-chatbox-select-channel-Radio = Radio
+hud-chatbox-select-channel-Subtle = Subtle
 
 hud-chatbox-channel-Admin = Admin Misc
 hud-chatbox-channel-AdminAlert = Admin Alert

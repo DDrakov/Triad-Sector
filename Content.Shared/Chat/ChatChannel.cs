@@ -91,10 +91,20 @@ namespace Content.Shared.Chat
         /// </summary>
         Unspecified = 1 << 15,
 
+                /// <summary>
+        ///     Subtle - Floofstation
+        /// </summary>
+        Subtle = 1 << 16,
+
+        /// <summary>
+        ///     Subtle - Floofstation
+        /// </summary>
+        SubtleOOC = 1 << 17,
+
         /// <summary>
         ///     Channels considered to be IC.
         /// </summary>
-        IC = Local | Whisper | Radio | Dead | Emotes | Damage | Visual | CollectiveMind | Notifications,
+        IC = Local | Whisper | Radio | Dead | Emotes | Subtle | Damage | Visual | CollectiveMind | Notifications,
 
         AdminRelated = Admin | AdminAlert | AdminChat,
     }

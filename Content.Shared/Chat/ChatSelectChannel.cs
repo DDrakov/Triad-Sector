@@ -47,6 +47,16 @@ namespace Content.Shared.Chat
         CollectiveMind = ChatChannel.CollectiveMind,
 
         /// <summary>
+        ///     Subtle - Floofstation
+        /// </summary>
+        Subtle = ChatChannel.Subtle,
+
+        /// <summary>
+        ///     Subtle - Floofstation
+        /// </summary>
+        SubtleOOC = ChatChannel.SubtleOOC,
+
+        /// <summary>
         ///     Deadchat
         /// </summary>
         Dead = ChatChannel.Dead,
