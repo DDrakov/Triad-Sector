@@ -1,3 +1,4 @@
+using Content.Server._Common.Consent; // Consent system
 using Content.Server._NF.Auth;
 using Content.Server.Acz;
 using Content.Server.Administration;
@@ -106,6 +107,7 @@ namespace Content.Server.Entry
                 IoCManager.Resolve<IAdminLogManager>().Initialize();
                 IoCManager.Resolve<IConnectionManager>().Initialize();
                 _dbManager.Init();
+                IoCManager.Resolve<IServerConsentManager>().Initialize(); // Consent system
                 IoCManager.Resolve<IServerPreferencesManager>().Init();
                 IoCManager.Resolve<INodeGroupFactory>().Initialize();
                 IoCManager.Resolve<ContentNetworkResourceManager>().Initialize();

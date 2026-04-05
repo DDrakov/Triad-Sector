@@ -149,6 +149,7 @@ namespace Content.Client.Input
             aghost.AddFunction(ContentKeyFunctions.TryPullObject);
             aghost.AddFunction(ContentKeyFunctions.MovePulledObject);
             aghost.AddFunction(ContentKeyFunctions.ReleasePulledObject);
+            common.AddFunction(ContentKeyFunctions.OpenConsentWindow); // Floofstation
 
             var ghost = contexts.New("ghost", "human");
             ghost.AddFunction(EngineKeyFunctions.MoveUp);
