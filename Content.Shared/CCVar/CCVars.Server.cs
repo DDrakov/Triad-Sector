@@ -12,13 +12,13 @@ public sealed partial class CCVars
     ///     Change this to have the changelog and rules "last seen" date stored separately.
     /// </summary>
     public static readonly CVarDef<string> ServerId =
-        CVarDef.Create("server.id", "new_frontier", CVar.REPLICATED | CVar.SERVER); // Frontier: new_frontier
+        CVarDef.Create("server.id", "Triad", CVar.REPLICATED | CVar.SERVER); // Triad: Triad
 
     /// <summary>
     ///     Guide Entry Prototype ID to be displayed as the server rules.
     /// </summary>
     public static readonly CVarDef<string> RulesFile =
-        CVarDef.Create("server.rules_file", "MonolithRuleset", CVar.REPLICATED | CVar.SERVER); // Monolith
+        CVarDef.Create("server.rules_file", "FrontierRuleset", CVar.REPLICATED | CVar.SERVER); // Triad: FrontierRuleset
 
     /// <summary>
     ///     Guide entry that is displayed by default when a guide is opened.
@@ -39,14 +39,14 @@ public sealed partial class CCVars
     /// </para>
     /// </remarks>
     public static readonly CVarDef<int> ServerUptimeRestartMinutes =
-        CVarDef.Create("server.uptime_restart_minutes", 0, CVar.SERVERONLY);
+        CVarDef.Create("server.uptime_restart_minutes", 4320, CVar.SERVERONLY);
 
     /// <summary>
     ///     This will be the title shown in the lobby
     ///     If empty, the title will be {ui-lobby-title} + the server's full name from the hub
     /// </summary>
     public static readonly CVarDef<string> ServerLobbyName =
-        CVarDef.Create("server.lobby_name", "", CVar.REPLICATED | CVar.SERVER);
+        CVarDef.Create("server.lobby_name", "Triad", CVar.REPLICATED | CVar.SERVER);
 
     /// <summary>
     ///     The width of the right side (chat) panel in the lobby
