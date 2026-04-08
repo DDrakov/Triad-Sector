@@ -23,6 +23,10 @@
   cost: 25000
   recipeUnlocks:
   - WeaponRifleAnnieTSF
+  - WeaponLMGGrizzlyTSF
+  - WeaponDEWCalico
+  - Magazine700Thz
+  - AmmoBox700Thz
   technologyPrerequisites:
   - TsfBasicGuns
   - UniversalMaterialResearchT2
