@@ -90,7 +90,7 @@
   id: MonoChimera
   name: mono-chimera-title
   description: mono-chimera-description
-  showInVote: false
+  showInVote: false #Triad removal from vote
   rules:
   - NFAdventure
   - BasicStationEventScheduler
@@ -107,7 +107,7 @@
   id: MonoMixed
   name: mono-mixed-title
   description: mono-mixed-description
-  showInVote: false
+  showInVote: false #Triad removal from vote
   rules:
   - NFAdventure
   - BasicStationEventScheduler
@@ -127,7 +127,7 @@
   id: MonoAllAtOnce
   name: mono-allatonce-title
   description: mono-allatonce-description
-  showInVote: false # we ball
+  showInVote: false # we ball #Triad removal from vote
   weight: 0.25 # requires 80% votes
   rules:
   - NFAdventure
