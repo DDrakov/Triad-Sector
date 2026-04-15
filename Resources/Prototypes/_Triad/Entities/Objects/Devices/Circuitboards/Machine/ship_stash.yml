@@ -1,0 +1,63 @@
+- type: entity
+  parent: BaseMachineCircuitboard
+  id: MilitaryStorageStashCircuitboard
+  name: military storage stash machine board
+  components:
+  - type: Sprite
+    state: engineering
+  - type: MachineBoard
+    prototype: MilitaryStorageStash
+    requirements:
+      Capacitor: 2
+    stackRequirements:
+      Plasteel: 8
+      Plastitanium: 16
+      Steel: 12
+
+- type: entity
+  parent: BaseMachineCircuitboard
+  id: MedicalBluespaceDeskCircuitboard
+  name: medical bluespace desk machine board
+  components:
+  - type: Sprite
+    state: engineering
+  - type: MachineBoard
+    prototype: MedicalBluespaceDesk
+    requirements:
+      Capacitor: 4
+      Manipulator: 2
+    stackRequirements:
+      Glass: 20
+      Steel: 20
+
+- type: entity
+  parent: BaseMachineCircuitboard
+  id: BotanyTableCircuitboard
+  name: botany table machine board
+  components:
+  - type: Sprite
+    state: engineering
+  - type: MachineBoard
+    prototype: BotanyTable
+    requirements:
+      Capacitor: 4
+      Manipulator: 2
+    stackRequirements:
+      Glass: 20
+      Steel: 10
+      WoodPlank: 10
+
+- type: entity
+  parent: BaseMachineCircuitboard
+  id: CivilianStorageStashCircuitboard
+  name: civilian storage stash machine board
+  components:
+  - type: Sprite
+    state: engineering
+  - type: MachineBoard
+    prototype: CivilianStorageStash
+    requirements:
+      Capacitor: 2
+    stackRequirements:
+      Steel: 24
+      Plasteel: 8

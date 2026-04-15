@@ -167,7 +167,7 @@
   - type: Storage
     grid:
     - 0,0,3,7
-    - 5,0,11,7
+    - 5,1,11,7
     maxItemSize: Large
     blacklist:
       components:

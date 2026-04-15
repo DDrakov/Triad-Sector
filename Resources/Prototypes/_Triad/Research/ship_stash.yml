@@ -1,0 +1,28 @@
+# TODO : Change the name to use .ftl
+- type: technology
+  id: CivilianStashTechnology
+  name: Civilian Ship Stash
+  entityIcon: CivilianStorageStash
+  discipline: Experimental
+  tier: 3
+  cost: 50000
+  recipeUnlocks:
+  - CivilianStorageStashCircuitboard
+  - BotanyTableCircuitboard
+  - MedicalBluespaceDeskCircuitboard
+  technologyPrerequisites:
+  - SuperParts
+  position: 1, 19
+
+- type: technology
+  id: MilitaryStashTechnology
+  name: Military Ship Stash
+  entityIcon: MilitaryStorageStash
+  discipline: Experimental
+  tier: 3
+  cost: 45000
+  recipeUnlocks:
+  - MilitaryStorageStashCircuitboard
+  technologyPrerequisites:
+  - CivilianStashTechnology
+  position: 2, 19
