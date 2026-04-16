@@ -1,7 +1,7 @@
 # TODO : Change the name to use .ftl
 - type: technology
   id: CivilianStashTechnology
-  name: Civilian Ship Stash
+  name: research-technology-civilian-stash
   entityIcon: CivilianStorageStash
   discipline: Experimental
   tier: 3
@@ -16,7 +16,7 @@
 
 - type: technology
   id: MilitaryStashTechnology
-  name: Military Ship Stash
+  name: research-technology-military-stash
   entityIcon: MilitaryStorageStash
   discipline: Experimental
   tier: 3
