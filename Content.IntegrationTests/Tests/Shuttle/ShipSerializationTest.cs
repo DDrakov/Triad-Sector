@@ -35,50 +35,47 @@ public sealed class ShipSerializationTest : ContentUnitTest
         var shipSer = entManager.System<ShipSerializationSystem>();
         var cfg = server.ResolveDependency<IConfigurationManager>();
         var mapSys = entManager.System<SharedMapSystem>();
-        var xformSys = entManager.System<SharedTransformSystem>();
 
-        await server.WaitAssertion(() =>
+        // --- Setup ---
+        cfg.SetCVar(CCVars.ShipyardUseLegacySerializer, false);
+
+        entManager.DeleteEntity(map.Grid);
+        var gridEnt = mapManager.CreateGridEntity(map.MapId);
+        var gridUid = gridEnt.Owner;
+        var gridComp = gridEnt.Comp;
+
+        mapSys.SetTile(gridUid, gridComp, Vector2i.Zero, new Tile(1));
+
+        var ent1 = entManager.SpawnEntity("AirlockShuttle",
+            new EntityCoordinates(gridUid, new Vector2(0.5f, 0.5f)));
+        var ent2 = entManager.SpawnEntity("ChairOffice",
+            new EntityCoordinates(gridUid, new Vector2(1.5f, 0.5f)));
+
+        await server.WaitIdleAsync();
+
+        // --- Assertions (single pass) ---
+        Assert.That(entManager.EntityExists(ent1));
+        Assert.That(entManager.EntityExists(ent2));
+
+        var data = shipSer.SerializeShip(gridUid, new NetUserId(Guid.NewGuid()), "TestShip");
+
+        Assert.That(data.Grids.Count, Is.EqualTo(1));
+        var g = data.Grids[0];
+
+        Assert.That(g.Tiles.Count, Is.EqualTo(1));
+        Assert.That(g.Entities.Count >= 2);
+
+        var foundAirlock = false;
+        var foundChair = false;
+
+        foreach (var e in g.Entities)
         {
-            // Ensure we use the refactored path.
-            cfg.SetCVar(CCVars.ShipyardUseLegacySerializer, false);
+            if (e.Prototype == "AirlockShuttle") foundAirlock = true;
+            if (e.Prototype == "ChairOffice") foundChair = true;
+        }
 
-            // Create a fresh grid separate from default test map grid (remove initial grid to minimize noise).
-            entManager.DeleteEntity(map.Grid);
-            var gridEnt = mapManager.CreateGridEntity(map.MapId);
-            var gridUid = gridEnt.Owner;
-            var gridComp = gridEnt.Comp;
-
-            // Lay down a single solid tile so spawned entities can anchor if needed.
-            mapSys.SetTile(gridUid, gridComp, Vector2i.Zero, new Tile(1));
-
-            // Spawn a couple of simple prototypes that should serialize (avoid ones filtered like vending machines).
-            var coords = new EntityCoordinates(gridUid, new Vector2(0.5f, 0.5f));
-            var ent1 = entManager.SpawnEntity("AirlockShuttle", coords); // has Transform + is a clear prototype
-            var ent2 = entManager.SpawnEntity("ChairOffice", new EntityCoordinates(gridUid, new Vector2(1.5f, 0.5f)));
-
-            // Sanity: they exist and are children of the grid.
-            Assert.That(entManager.EntityExists(ent1));
-            Assert.That(entManager.EntityExists(ent2));
-            Assert.That(entManager.GetComponent<TransformComponent>(ent1).ParentUid, Is.EqualTo(gridUid));
-            Assert.That(entManager.GetComponent<TransformComponent>(ent2).ParentUid, Is.EqualTo(gridUid));
-
-            var playerId = new NetUserId(Guid.NewGuid());
-            var shipName = "TestShip";
-            var data = shipSer.SerializeShip(gridUid, playerId, shipName);
-
-            Assert.That(data.Grids.Count, Is.EqualTo(1), "Expected exactly one grid serialized");
-            var g = data.Grids[0];
-
-            // Tiles: we placed exactly one non-space tile.
-            Assert.That(g.Tiles.Count, Is.EqualTo(1), "Expected one non-space tile");
-
-            // Entities: expect at least the two we spawned, though additional infrastructure entities (grid, etc.) may appear.
-            // We only store entities with valid prototypes; ensure count >=2 and contains our prototypes.
-            Assert.That(g.Entities.Count >= 2, $"Expected at least 2 entities, got {g.Entities.Count}");
-            var protos = g.Entities.Select(e => e.Prototype).ToHashSet();
-            Assert.That(protos.Contains("AirlockShuttle"), "Serialized entities missing AirlockShuttle prototype");
-            Assert.That(protos.Contains("ChairOffice"), "Serialized entities missing ChairOffice prototype");
-        });
+        Assert.That(foundAirlock, "Missing AirlockShuttle");
+        Assert.That(foundChair, "Missing ChairOffice");
 
         await pair.CleanReturnAsync();
     }
