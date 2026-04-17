@@ -35,7 +35,7 @@ namespace Content.IntegrationTests.Tests._NF.Shipyard
                 var mapUid = mapManager.GetMapEntityId(mapId);
 
                 // Load the ambition ship
-                var mapLoaded = mapLoader.TryLoadGrid(mapId, new ResPath("/Maps/_NF/Shuttles/Expedition/ambition.yml"), out var gridUid);
+                var mapLoaded = mapLoader.TryLoadGrid(mapId, new ResPath("/Maps/_Mono/Shuttles/phaeron.yml"), out var gridUid);
 
                 Assert.That(mapLoaded, Is.True, "Should successfully load the ambition ship");
                 Assert.That(gridUid, Is.Not.Null, "Should get a valid grid UID");
